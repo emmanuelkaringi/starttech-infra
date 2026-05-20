@@ -12,13 +12,13 @@ terraform {
     }
   }
 
-  # Backend will be configured after S3 bucket creation
-  # backend "s3" {
-  #   bucket         = "starttech-tfstate-production"
-  #   key            = "terraform.tfstate"
-  #   region         = "us-east-1"
-  #   dynamodb_table = "terraform-locks-production"
-  # }
+  backend "s3" {
+    bucket         = "starttech-tfstate-production-bmfkuxqw"
+    key            = "terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-locks-production"
+    encrypt        = true
+  }
 }
 
 provider "aws" {

@@ -89,14 +89,14 @@ resource "aws_launch_template" "backend" {
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "backend" {
-  name                = "starttech-backend-asg-${var.environment}"
-  vpc_zone_identifier = var.private_subnet_ids
-  min_size            = var.min_size
-  max_size            = var.max_size
-  desired_capacity    = var.desired_capacity
-  health_check_type   = "ELB"
+  name                      = "starttech-backend-asg-${var.environment}"
+  vpc_zone_identifier       = var.private_subnet_ids
+  min_size                  = var.min_size
+  max_size                  = var.max_size
+  desired_capacity          = var.desired_capacity
+  health_check_type         = "ELB"
   health_check_grace_period = 300
-  target_group_arns   = [aws_lb_target_group.backend.arn]
+  target_group_arns         = [aws_lb_target_group.backend.arn]
 
   launch_template {
     id      = aws_launch_template.backend.id
@@ -119,7 +119,7 @@ resource "aws_autoscaling_policy" "scale_up" {
   name                   = "starttech-scale-up-${var.environment}"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = 300
+  cooldown               = 300
   autoscaling_group_name = aws_autoscaling_group.backend.name
 }
 
@@ -128,7 +128,7 @@ resource "aws_autoscaling_policy" "scale_down" {
   name                   = "starttech-scale-down-${var.environment}"
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = 300
+  cooldown               = 300
   autoscaling_group_name = aws_autoscaling_group.backend.name
 }
 
