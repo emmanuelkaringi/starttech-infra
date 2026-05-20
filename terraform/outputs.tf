@@ -62,6 +62,17 @@ output "dynamodb_lock_table" {
   value       = module.storage.dynamodb_lock_table
 }
 
+# Monitoring Outputs
+output "application_log_group" {
+  description = "Name of the application CloudWatch log group"
+  value       = module.monitoring.application_log_group_name
+}
+
+output "redis_endpoint" {
+  description = "Endpoint of the ElastiCache Redis cluster"
+  value       = module.monitoring.redis_endpoint
+}
+
 # General
 output "aws_region" {
   description = "The AWS region used for deployment"

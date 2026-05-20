@@ -76,3 +76,16 @@ module "storage" {
   domain_name = var.domain_name
   tags        = var.tags
 }
+
+# Monitoring Module
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  environment              = var.environment
+  vpc_id                   = module.networking.vpc_id
+  private_subnet_ids       = module.networking.private_subnet_ids
+  redis_security_group_id  = module.security.redis_security_group_id
+  autoscaling_group_name   = module.compute.autoscaling_group_name
+  alb_arn                  = module.compute.alb_arn
+  tags                     = var.tags
+}
