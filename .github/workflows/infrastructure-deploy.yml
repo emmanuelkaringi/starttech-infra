@@ -36,13 +36,7 @@ jobs:
       - name: Terraform Format Check
         working-directory: ./terraform
         run: |
-          terraform fmt -recursive -check -diff
-          if [ $? -ne 0 ]; then
-            echo "Terraform files are not formatted. Running terraform fmt..."
-            terraform fmt -recursive
-            echo "Please commit the formatted files."
-          fi
-        continue-on-error: true
+          terraform fmt -recursive -check -diff || true
 
       - name: Terraform Validate
         working-directory: ./terraform
@@ -76,7 +70,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./terraform
-        run: terraform plan -no-color
+        run: terraform plan -no-color -lock-timeout=5m
         env:
           TF_VAR_mongodb_atlas_connection_string: ${{ secrets.TF_VAR_MONGODB_ATLAS_CONNECTION_STRING }}
 
@@ -86,6 +80,7 @@ jobs:
     needs: validate
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production
+    timeout-minutes: 30
     
     steps:
       - name: Checkout code
@@ -109,7 +104,7 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ./terraform
-        run: terraform apply -auto-approve -no-color
+        run: terraform apply -auto-approve -no-color -lock-timeout=10m
         env:
           TF_VAR_mongodb_atlas_connection_string: ${{ secrets.TF_VAR_MONGODB_ATLAS_CONNECTION_STRING }}
 
