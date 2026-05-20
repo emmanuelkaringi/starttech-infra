@@ -9,13 +9,13 @@ variable "domain_name" {
   default     = ""
 }
 
+variable "alb_dns_name" {
+  description = "DNS name of the Application Load Balancer"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
   default     = {}
-}
-
-variable "alb_dns_name" {
-  description = "DNS name of the ALB"
-  type        = string
 }
