@@ -30,6 +30,17 @@ output "redis_security_group_id" {
   value       = module.security.redis_security_group_id
 }
 
+# Compute Outputs
+output "alb_dns_name" {
+  description = "DNS name of the Application Load Balancer"
+  value       = module.compute.alb_dns_name
+}
+
+output "autoscaling_group_name" {
+  description = "Name of the Auto Scaling Group"
+  value       = module.compute.autoscaling_group_name
+}
+
 # General
 output "aws_region" {
   description = "The AWS region used for deployment"
