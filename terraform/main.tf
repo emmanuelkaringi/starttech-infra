@@ -74,6 +74,7 @@ module "storage" {
 
   environment = var.environment
   domain_name = var.domain_name
+  alb_dns_name = module.compute.alb_dns_name
   tags        = var.tags
 }
 

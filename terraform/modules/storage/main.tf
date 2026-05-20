@@ -5,7 +5,7 @@ resource "random_string" "bucket_suffix" {
   upper   = false
 }
 
-# S3 Bucket for Frontend Hosting
+# ============ S3 BUCKET FOR FRONTEND ============
 resource "aws_s3_bucket" "frontend" {
   bucket        = "starttech-frontend-${var.environment}-${random_string.bucket_suffix.result}"
   force_destroy = true
@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "frontend" {
   })
 }
 
-# Block Public Access (we'll use CloudFront for access)
+# Block Public Access
 resource "aws_s3_bucket_public_access_block" "frontend" {
   bucket = aws_s3_bucket.frontend.id
 
@@ -25,7 +25,7 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
   restrict_public_buckets = true
 }
 
-# S3 Bucket Website Configuration
+# S3 Website Configuration
 resource "aws_s3_bucket_website_configuration" "frontend" {
   bucket = aws_s3_bucket.frontend.id
 
@@ -34,7 +34,7 @@ resource "aws_s3_bucket_website_configuration" "frontend" {
   }
 
   error_document {
-    key = "index.html" # For SPA routing
+    key = "index.html"
   }
 }
 
@@ -64,73 +64,10 @@ resource "aws_s3_bucket_policy" "frontend" {
         Resource = "${aws_s3_bucket.frontend.arn}/*"
         Condition = {
           StringEquals = {
-            "AWS:SourceArn" = aws_cloudfront_distribution.frontend.arn
+            "AWS:SourceArn" = aws_cloudfront_distribution.full_stack.arn
           }
         }
       }
     ]
-  })
-}
-
-# CloudFront Distribution
-resource "aws_cloudfront_distribution" "frontend" {
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
-  price_class         = "PriceClass_100" # North America & Europe (cheapest)
-  wait_for_deployment = false
-
-  origin {
-    domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
-    origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
-    origin_id                = "S3-${aws_s3_bucket.frontend.bucket}"
-  }
-
-  default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "S3-${aws_s3_bucket.frontend.bucket}"
-
-    forwarded_values {
-      query_string = false
-      headers      = ["Origin"]
-
-      cookies {
-        forward = "none"
-      }
-    }
-
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
-    compress               = true
-  }
-
-  # Custom error response for SPA routing
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-
-  tags = merge(var.tags, {
-    Name = "starttech-cdn-${var.environment}"
   })
 }
