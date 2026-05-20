@@ -14,6 +14,22 @@ output "private_subnet_ids" {
   value       = module.networking.private_subnet_ids
 }
 
+# Security Group Outputs
+output "alb_security_group_id" {
+  description = "ID of the ALB security group"
+  value       = module.security.alb_security_group_id
+}
+
+output "ec2_security_group_id" {
+  description = "ID of the EC2 security group"
+  value       = module.security.ec2_security_group_id
+}
+
+output "redis_security_group_id" {
+  description = "ID of the Redis security group"
+  value       = module.security.redis_security_group_id
+}
+
 # General
 output "aws_region" {
   description = "The AWS region used for deployment"

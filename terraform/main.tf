@@ -40,3 +40,12 @@ module "networking" {
   availability_zones   = var.availability_zones
   tags                 = var.tags
 }
+
+# Security Module
+module "security" {
+  source = "./modules/security"
+
+  environment = var.environment
+  vpc_id      = module.networking.vpc_id
+  tags        = var.tags
+}
