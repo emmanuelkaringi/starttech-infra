@@ -1,0 +1,30 @@
+# AWS Region
+aws_region = "us-east-1"
+
+# Environment
+environment = "production"
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
+availability_zones   = ["us-east-1a", "us-east-1b"]
+
+# EC2 Configuration
+instance_type    = "t3.small"
+min_size         = 2
+max_size         = 4
+desired_capacity = 2
+
+# Database (MongoDB Atlas)
+mongodb_atlas_connection_string = "your-mongodb-atlas-connection-string"
+
+# Frontend Domain (optional)
+domain_name = ""
+
+# Tags
+tags = {
+  Project     = "StartTech"
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}
