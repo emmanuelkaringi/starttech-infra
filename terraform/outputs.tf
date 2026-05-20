@@ -41,6 +41,27 @@ output "autoscaling_group_name" {
   value       = module.compute.autoscaling_group_name
 }
 
+# Storage Outputs
+output "frontend_bucket_name" {
+  description = "Name of the S3 bucket for frontend"
+  value       = module.storage.frontend_bucket_name
+}
+
+output "cloudfront_domain_name" {
+  description = "Domain name of the CloudFront distribution"
+  value       = module.storage.cloudfront_domain_name
+}
+
+output "terraform_state_bucket" {
+  description = "Name of the S3 bucket for Terraform state"
+  value       = module.storage.terraform_state_bucket
+}
+
+output "dynamodb_lock_table" {
+  description = "Name of the DynamoDB table for state locking"
+  value       = module.storage.dynamodb_lock_table
+}
+
 # General
 output "aws_region" {
   description = "The AWS region used for deployment"

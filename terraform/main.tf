@@ -14,10 +14,10 @@ terraform {
 
   # Backend will be configured after S3 bucket creation
   # backend "s3" {
-  #   bucket         = "starttech-terraform-state"
+  #   bucket         = "starttech-tfstate-production"
   #   key            = "terraform.tfstate"
   #   region         = "us-east-1"
-  #   dynamodb_table = "terraform-locks"
+  #   dynamodb_table = "terraform-locks-production"
   # }
 }
 
@@ -66,4 +66,13 @@ module "compute" {
   desired_capacity               = var.desired_capacity
   mongodb_atlas_connection_string = var.mongodb_atlas_connection_string
   tags                           = var.tags
+}
+
+# Storage Module
+module "storage" {
+  source = "./modules/storage"
+
+  environment = var.environment
+  domain_name = var.domain_name
+  tags        = var.tags
 }
