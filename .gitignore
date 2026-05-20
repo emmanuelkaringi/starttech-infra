@@ -17,3 +17,6 @@
 Thumbs.db
 
 .env
+
+infrastructure-outputs.json
+*.tfplan

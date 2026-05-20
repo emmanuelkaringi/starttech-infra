@@ -68,5 +68,5 @@ variable "tags" {
 variable "ami_id" {
   description = "AMI ID for EC2 instances"
   type        = string
-  default     = "ami-0c7217cdde3ec32de" # Amazon Linux 2023 us-east-1 (update for your region)
+  default     = "ami-02b2c1b57c5105166" # Amazon Linux 2023 us-east-1 (update for your region)
 }

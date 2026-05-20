@@ -134,38 +134,3 @@ resource "aws_cloudfront_distribution" "frontend" {
     Name = "starttech-cdn-${var.environment}"
   })
 }
-
-# S3 Bucket for Terraform State (separate from frontend)
-resource "aws_s3_bucket" "terraform_state" {
-  bucket        = "starttech-tfstate-${var.environment}-${random_string.bucket_suffix.result}"
-  force_destroy = true
-
-  tags = merge(var.tags, {
-    Name = "starttech-tfstate-${var.environment}"
-  })
-}
-
-# Enable versioning on state bucket
-resource "aws_s3_bucket_versioning" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-# DynamoDB Table for Terraform State Locking
-resource "aws_dynamodb_table" "terraform_locks" {
-  name         = "terraform-locks-${var.environment}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = merge(var.tags, {
-    Name = "terraform-locks-${var.environment}"
-  })
-}

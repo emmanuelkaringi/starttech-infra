@@ -52,16 +52,6 @@ output "cloudfront_domain_name" {
   value       = module.storage.cloudfront_domain_name
 }
 
-output "terraform_state_bucket" {
-  description = "Name of the S3 bucket for Terraform state"
-  value       = module.storage.terraform_state_bucket
-}
-
-output "dynamodb_lock_table" {
-  description = "Name of the DynamoDB table for state locking"
-  value       = module.storage.dynamodb_lock_table
-}
-
 # Monitoring Outputs
 output "application_log_group" {
   description = "Name of the application CloudWatch log group"
