@@ -12,13 +12,13 @@ terraform {
     }
   }
 
-  backend "s3" {
-    # Configure these after creating the S3 bucket
-    # bucket = "starttech-terraform-state"
-    # key    = "terraform.tfstate"
-    # region = "us-east-1"
-    # dynamodb_table = "terraform-locks"
-  }
+  # Backend will be configured after S3 bucket creation
+  # backend "s3" {
+  #   bucket         = "starttech-terraform-state"
+  #   key            = "terraform.tfstate"
+  #   region         = "us-east-1"
+  #   dynamodb_table = "terraform-locks"
+  # }
 }
 
 provider "aws" {
@@ -27,4 +27,16 @@ provider "aws" {
   default_tags {
     tags = var.tags
   }
+}
+
+# Networking Module
+module "networking" {
+  source = "./modules/networking"
+
+  environment          = var.environment
+  vpc_cidr             = var.vpc_cidr
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  availability_zones   = var.availability_zones
+  tags                 = var.tags
 }
