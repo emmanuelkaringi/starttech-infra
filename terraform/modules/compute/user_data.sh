@@ -16,23 +16,40 @@ usermod -a -G docker ec2-user
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Install CloudWatch Agent
+# Install AWS CloudWatch Agent
 yum install -y amazon-cloudwatch-agent
 
 # Create application directory
-mkdir -p /opt/starttech
+mkdir -p /opt/starttech/logs
 chown -R ec2-user:ec2-user /opt/starttech
 
-# Create .env file for application
+# Create .env file for the Go application
 cat > /opt/starttech/.env << EOT
-ENVIRONMENT=${environment}
+# Application
 PORT=8080
+ENVIRONMENT=${environment}
+
+# MongoDB
 MONGO_URI=${mongodb_atlas_connection_string}
 DB_NAME=much_todo_db
-JWT_SECRET_KEY=change-me-in-production
+
+# JWT Authentication
+JWT_SECRET_KEY=change-me-in-production-use-a-very-long-random-string
 JWT_EXPIRATION_HOURS=72
+
+# CORS
+ALLOWED_ORIGINS=*
+
+# Cookies
+COOKIE_DOMAINS=
+SECURE_COOKIE=true
+
+# Redis Caching
 ENABLE_CACHE=true
-REDIS_ADDR=localhost:6379
+REDIS_ADDR=REDIS_ENDPOINT_PLACEHOLDER:6379
+REDIS_PASSWORD=
+
+# Logging
 LOG_LEVEL=INFO
 LOG_FORMAT=json
 EOT
@@ -57,6 +74,23 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOT'
         ]
       }
     }
+  },
+  "metrics": {
+    "metrics_collected": {
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
+        ]
+      },
+      "disk": {
+        "measurement": [
+          "disk_used_percent"
+        ],
+        "resources": [
+          "/"
+        ]
+      }
+    }
   }
 }
 EOT
@@ -65,3 +99,4 @@ EOT
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
 
 echo "EC2 instance bootstrap completed!"
+echo "Redis endpoint will be updated during deployment via CI/CD pipeline"

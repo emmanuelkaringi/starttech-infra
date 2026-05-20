@@ -1,0 +1,32 @@
+# CloudWatch Logs Insights Queries
+
+## Error logs in last hour
+fields @timestamp, @message
+| filter @message like /ERROR/
+| sort @timestamp desc
+| limit 100
+
+## API request count by endpoint (last 1 hour)
+fields @timestamp, @message
+| parse @message /\"path\":\"(?<endpoint>[^\"]+)\"/
+| stats count() as request_count by endpoint
+| sort request_count desc
+
+## Average response time by endpoint (last 1 hour)
+fields @timestamp, @message
+| parse @message /\"path\":\"(?<endpoint>[^\"]+)\".*\"duration_ms\":(?<duration>\d+)/
+| stats avg(duration) as avg_duration by endpoint
+| sort avg_duration desc
+
+## Slow requests (> 1 second) in last hour
+fields @timestamp, @message
+| parse @message /\"path\":\"(?<endpoint>[^\"]+)\".*\"duration_ms\":(?<duration>\d+)/
+| filter duration > 1000
+| sort @timestamp desc
+| limit 50
+
+## User registration count (last 24 hours)
+fields @timestamp, @message
+| filter @message like /POST.*\/api\/v1\/auth\/register/
+| stats count() as registrations by bin(1h)
+| sort registrations desc
