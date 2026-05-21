@@ -13,7 +13,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "starttech-tfstate-production-l9hqsgrp"
+    bucket         = "starttech-tfstate-production-opbg3p3z"
     key            = "terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-locks-production"
