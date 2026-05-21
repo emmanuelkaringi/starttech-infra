@@ -1,87 +1,211 @@
-# StartTech System Architecture
+# StartTech Infrastructure Architecture
 
-## Overview
+> **Live Application**: [https://d2uv8gh2gkla6v.cloudfront.net](https://d2uv8gh2gkla6v.cloudfront.net)
 
-StartTech is a full-stack ToDo application with a React frontend, Go backend API, Redis caching, and MongoDB database. The infrastructure is fully managed with Terraform and deployed via GitHub Actions CI/CD pipelines.
+Infrastructure as Code (IaC) architecture for the StartTech full-stack application.
 
-## Architecture Diagram
+---
+
+## 📋 Table of Contents
+
+- [Infrastructure Overview](#infrastructure-overview)
+- [Network Architecture](#network-architecture)
+- [Compute Architecture](#compute-architecture)
+- [Storage & CDN Architecture](#storage--cdn-architecture)
+- [Caching Architecture](#caching-architecture)
+- [Monitoring Architecture](#monitoring-architecture)
+- [Security Architecture](#security-architecture)
+- [Terraform Module Structure](#terraform-module-structure)
+
+---
+
+## Infrastructure Overview
+
+All infrastructure is defined as code using Terraform and deployed via GitHub Actions.
+
+### AWS Resources
+
+| Category | Resource | Count | Purpose |
+|----------|----------|-------|---------|
+| **Network** | VPC | 1 | Isolated network |
+| | Public Subnets | 2 | ALB, NAT Gateway |
+| | Private Subnets | 2 | EC2, Redis |
+| | NAT Gateway | 1 | Outbound internet for private subnets |
+| | Internet Gateway | 1 | Public internet access |
+| **Compute** | EC2 Instances | 2-4 | Backend application (Auto Scaling) |
+| | Launch Template | 1 | EC2 configuration |
+| | ALB | 1 | Load balancing |
+| | Target Group | 1 | Health checks, routing |
+| **Storage** | S3 Buckets | 2 | Frontend hosting + Terraform state |
+| | CloudFront | 1 | CDN (S3 + ALB origins) |
+| **Caching** | ElastiCache Redis | 1 | Session and data caching |
+| **Security** | Security Groups | 3 | ALB, EC2, Redis |
+| | IAM Roles | 2 | EC2 + Policies |
+| **Monitoring** | CloudWatch Log Groups | 2 | Application + System logs |
+| | CloudWatch Alarms | 3 | CPU, Healthy Hosts, Redis CPU |
+
+---
+
+## Network Architecture
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ CloudFront CDN │
-│ (HTTPS, Global Edge Caching) │
-└─────────────────────┬───────────────────┬───────────────────────┘
+INTERNET
+│
+▼
+┌─────────────────┐
+│ Internet Gateway│
+└────────┬────────┘
+│
+┌────────▼────────┐
+│ VPC (10.0.0.0/16)│
+└────────┬────────┘
+│
+┌──────────────────┼──────────────────┐
+│ │ │
+┌───────▼───────┐ ┌───────▼───────┐ ┌───────▼───────┐
+│ Public Subnet │ │ Public Subnet │ │ NAT Gateway │
+│ 10.0.1.0/24 │ │ 10.0.2.0/24 │ │ (us-east-1a) │
+│ (us-east-1a) │ │ (us-east-1b) │ └───────┬───────┘
+└───────┬───────┘ └───────┬───────┘ │
+│ │ │
+┌───────▼───────┐ ┌───────▼───────┐ │
+│ ALB (Public) │ │ ALB (Public) │ │
+└───────┬───────┘ └───────┬───────┘ │
+│ │ │
+┌───────▼───────┐ ┌───────▼───────┐ │
+│ Private Subnet│ │ Private Subnet│ │
+│ 10.0.10.0/24 │ │ 10.0.11.0/24 │ │
+│ (us-east-1a) │ │ (us-east-1b) │◄─────────┘
+└───────┬───────┘ └───────┬───────┘
 │ │
 ┌───────▼───────┐ ┌───────▼───────┐
-│ S3 Bucket │ │ ALB │
-│ (Frontend) │ │ (Backend) │
-└───────────────┘ └───────┬───────┘
-│
-┌───────────▼───────────┐
-│ Auto Scaling Group │
-│ EC2 Instances (2-4) │
-│ Docker Containers │
-└───────────┬───────────┘
-│
-┌─────────────────────┼─────────────────────┐
-│ │ │
-┌───────▼───────┐ ┌────────▼────────┐ ┌────────▼────────┐
-│ ElastiCache │ │ CloudWatch │ │ MongoDB Atlas │
-│ Redis 7.0 │ │ Logs & Metrics │ │ (Cloud DBaaS) │
-└───────────────┘ └─────────────────┘ └─────────────────┘
+│ EC2 + Redis │ │ EC2 + Redis │
+└───────────────┘ └───────────────┘
 ```
 
-## Component Details
+### Subnet Design
 
-### Frontend (React)
-- **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **State Management**: React Context + TanStack Query
-- **Styling**: Tailwind CSS with shadcn/ui components
-- **Hosting**: S3 bucket with CloudFront CDN
-- **Authentication**: JWT with httpOnly cookies
+| Subnet Type | CIDR | AZ | Purpose |
+|-------------|------|----|---------|
+| Public 1 | 10.0.1.0/24 | us-east-1a | ALB endpoint |
+| Public 2 | 10.0.2.0/24 | us-east-1b | ALB endpoint (HA) |
+| Private 1 | 10.0.10.0/24 | us-east-1a | EC2 + Redis |
+| Private 2 | 10.0.11.0/24 | us-east-1b | EC2 (HA) |
 
-### Backend API (Go)
-- **Framework**: Gin Web Framework
-- **Authentication**: JWT tokens (httpOnly cookies)
-- **Database Driver**: MongoDB Go Driver
-- **Caching**: Redis via go-redis
-- **Logging**: Structured JSON logging with zerolog
-- **API Docs**: Swagger/OpenAPI auto-generated
-- **Container**: Docker with multi-stage builds
+---
 
-### Infrastructure (Terraform)
-- **Networking**: VPC with public/private subnets across 2 AZs
-- **Compute**: EC2 with Auto Scaling (2-4 instances)
-- **Load Balancer**: Application Load Balancer
-- **CDN**: CloudFront with S3 and ALB origins
-- **Caching**: ElastiCache Redis 7.0
-- **Monitoring**: CloudWatch Logs, Metrics, Alarms
-- **CI/CD**: GitHub Actions with ECR
+## Compute Architecture
 
-## Data Flow
+### Auto Scaling Configuration
 
-1. **User Request** → CloudFront CDN
-2. **Static Assets** → S3 Bucket (cached at edge)
-3. **API Requests** (`/auth/*`, `/tasks/*`, `/users/*`, `/health`) → ALB → EC2
-4. **Backend Processing**:
-   - Authentication: JWT validation
-   - Cache Lookup: Redis (if enabled)
-   - Data Store: MongoDB Atlas
-5. **Response** → ALB → CloudFront → User
+| Parameter | Value |
+|-----------|-------|
+| Min Size | 2 |
+| Max Size | 4 |
+| Desired Capacity | 2 |
+| Instance Type | t3.small |
+| AMI | Amazon Linux 2023 |
+| Health Check | ELB (port 8080, path /health) |
+
+### Scaling Policies
+
+| Policy | Trigger | Action |
+|--------|---------|--------|
+| Scale Up | CPU > 80% for 10 min | +1 instance |
+| Scale Down | CPU < 40% for 10 min | -1 instance |
+
+### IAM Role Permissions
+
+| Policy | Purpose |
+|--------|---------|
+| ECR Access | Pull Docker images |
+| CloudWatch Logs | Write application logs |
+| SSM Managed Instance | Remote management |
+
+---
+
+## Storage & CDN Architecture
+
+### S3 Buckets
+
+| Bucket | Purpose | Public Access |
+|--------|---------|---------------|
+| `starttech-frontend-production-*` | React static files | Blocked (CloudFront only) |
+| `starttech-tfstate-production-*` | Terraform state | Blocked |
+
+### CloudFront Configuration
+
+| Setting | Value |
+|---------|-------|
+| Price Class | 100 (US, Canada, Europe) |
+| Default TTL | 3600s (1 hour) |
+| Max TTL | 86400s (24 hours) |
+| Viewer Protocol | Redirect HTTP → HTTPS |
+
+### CloudFront Behaviors
+
+| Path Pattern | Origin | Methods | Caching |
+|-------------|--------|---------|---------|
+| Default (*) | S3 | GET, HEAD | Enabled |
+| /auth/* | ALB | All | Disabled |
+| /tasks/* | ALB | All | Disabled |
+| /users/* | ALB | All | Disabled |
+| /health | ALB | GET, HEAD | Disabled |
+| /swagger/* | ALB | GET, HEAD | Disabled |
+
+---
+
+## Terraform Module Structure
+```
+terraform/
+├── main.tf # Root module, provider config
+├── variables.tf # Input variables
+├── outputs.tf # Output values
+├── terraform.tfvars # Variable values (gitignored)
+├── bootstrap/ # State backend setup
+│ ├── main.tf
+│ ├── variables.tf
+│ └── outputs.tf
+└── modules/
+├── networking/ # VPC, subnets, NAT, IGW, route tables
+│ ├── main.tf
+│ ├── variables.tf
+│ └── outputs.tf
+├── security/ # Security groups
+│ ├── main.tf
+│ ├── variables.tf
+│ └── outputs.tf
+├── compute/ # EC2, ASG, ALB, IAM, Launch Template
+│ ├── main.tf
+│ ├── variables.tf
+│ ├── outputs.tf
+│ ├── user_data.sh
+│ └── ecr_policy.tf
+├── storage/ # S3, CloudFront
+│ ├── main.tf
+│ ├── variables.tf
+│ ├── outputs.tf
+│ └── cloudfront_full.tf
+└── monitoring/ # CloudWatch, ElastiCache
+├── main.tf
+├── variables.tf
+└── outputs.tf
+```
+
+---
 
 ## Security Architecture
 
-- **Network**: Security groups restrict traffic between components
-- **Authentication**: JWT tokens with httpOnly, Secure cookies
-- **Secrets**: GitHub Secrets for CI/CD, environment variables on EC2
-- **IAM**: Least-privilege roles for EC2 (ECR pull, CloudWatch write)
-- **Encryption**: HTTPS via CloudFront, MongoDB Atlas TLS
-- **Scanning**: Trivy vulnerability scanning in CI/CD
+### Security Groups
 
-## Monitoring Architecture
+| SG Name | Ingress | Egress |
+|---------|---------|--------|
+| `starttech-alb-sg` | Port 80/443 from 0.0.0.0/0 | All |
+| `starttech-ec2-sg` | Port 8080 from ALB SG | All |
+| `starttech-redis-sg` | Port 6379 from EC2 SG | All |
 
-- **Logs**: CloudWatch Log Groups (`/starttech/application`, `/starttech/ec2/system`)
-- **Metrics**: CPU, Memory, Network via CloudWatch Agent
-- **Alarms**: High CPU, Unhealthy Hosts, Redis CPU
-- **Dashboard**: CloudWatch Dashboard for unified view
-- **Insights**: CloudWatch Logs Insights for log analysis
+### Principle of Least Privilege
+
+- EC2 instances can only pull from ECR (not push)
+- EC2 can only write to specific CloudWatch log groups
+- Redis only accessible from EC2 instances
+- S3 buckets block all public access
